@@ -1,6 +1,10 @@
 const chat = document.getElementById("chat");
 const msgs = document.getElementById("msgs");
 
+let timeForNextRequest = 0;
+let BACK_OFF = 5000;
+let failTries = 0;
+
 // let's store all current messages here
 let allChat = [];
 
@@ -14,6 +18,7 @@ chat.addEventListener("submit", function (e) {
   chat.elements.text.value = "";
 });
 
+// Submit the message
 async function postNewMsg(user, text) {
   // post to /poll a new message
   // write code here
@@ -32,6 +37,7 @@ async function postNewMsg(user, text) {
   const json = await res.json();
 }
 
+// Get all messages
 async function getNewMsgs() {
   // poll the server
   // write code here
@@ -39,8 +45,15 @@ async function getNewMsgs() {
   try {
     const res = await fetch("/poll");
     json = await res.json();
+
+    if (res.status >= 400) {
+      throw new Error("request did not succeed: " + res.status);
+    }
+
+    failTries = 0;
   } catch (err) {
     console.error("Polling Error", err);
+    failTries++;
   }
   allChat = json.msg;
   render();
@@ -48,6 +61,7 @@ async function getNewMsgs() {
   // setTimeout(getNewMsgs, INTERVAL);
 }
 
+// Render messages on UI
 function render() {
   // as long as allChat is holding all current messages, this will render them
   // into the ui. yes, it's inefficent. yes, it's fine for this example
@@ -61,12 +75,12 @@ function render() {
 const template = (user, msg) =>
   `<li class="collection-item"><span class="badge">${user}</span>${msg}</li>`;
 
-let timeForNextRequest = 0;
-
 async function rafTime(time) {
   if (timeForNextRequest <= time) {
     await getNewMsgs();
-    timeForNextRequest = time + INTERVAL;
+
+    // linear backoff time
+    timeForNextRequest = time + INTERVAL + failTries * BACK_OFF;
   }
 
   requestAnimationFrame(rafTime);

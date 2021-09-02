@@ -25,9 +25,21 @@ app.use(express.static("frontend"));
 app.get("/poll", function (req, res) {
   // use getMsgs to get messages to send back
   // write code here
-  res.json({
+
+  // Fail or succeed
+  // res.status(Math.random() > 0.5 ? 500 : 200).json({
+  //   msg: getMsgs(),
+  // });
+
+  // Always succeed
+  res.status(200).json({
     msg: getMsgs(),
   });
+
+  // Always fail
+  // res.status(500).json({
+  //   // msg: getMsgs(),
+  // });
 });
 
 app.post("/poll", function (req, res) {
